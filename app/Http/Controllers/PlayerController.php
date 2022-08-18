@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Imports\PlayersImport;
 use App\Models\Player;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PlayerController extends Controller
 {
@@ -40,7 +43,7 @@ class PlayerController extends Controller
             while (($filedata = fgetcsv($file, 1000, ",")) !== FALSE) {
                 $num = count($filedata);
 
-            // Skip first row (Remove below comment if you want to skip the first row)
+                // Skip first row (Remove below comment if you want to skip the first row)
                 if ($i == 0) {
                     $i++;
                     continue;
@@ -67,12 +70,12 @@ class PlayerController extends Controller
                         'salary' => $importData[6]
                     ]);
 
-            //Send Email
+                    //Send Email
                     $this->sendEmail($email, $name);
                     DB::commit();
                 } catch (\Exception $e) {
 
-            //throw $th;
+                    //throw $th;
                     DB::rollBack();
                 }
             }
@@ -81,6 +84,33 @@ class PlayerController extends Controller
             ]);
         } else {
             //no file was uploaded
+            throw new \Exception('No file was uploaded', Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+
+    public function uploadContentWithPackage(Request $request)
+    {
+        if ($request->file) {
+            $file = $request->file;
+            $extension = $file->getClientOriginalExtension(); //Get extension of uploaded file
+            $fileSize = $file->getSize(); //Get size of uploaded file in bytes
+
+            //Checks to see that the valid file types and sizes were uploaded
+            $this->checkUploadedFileProperties($extension, $fileSize);
+            $import = new PlayersImport();
+            Excel::import($import, $request->file);
+            foreach ($import->data as $user) {
+
+            //sends email to all users
+                $this->sendEmail($user->email, $user->name);
+            }
+
+            //Return a success response with the number if records uploaded
+            return response()->json([
+                'message' => $import->data->count() ." records successfully uploaded"
+            ]);
+        } else {
             throw new \Exception('No file was uploaded', Response::HTTP_BAD_REQUEST);
         }
     }
@@ -98,6 +128,7 @@ class PlayerController extends Controller
             throw new \Exception('Invalid file extension', Response::HTTP_UNSUPPORTED_MEDIA_TYPE); //415 error
         }
     }
+
 
     public function sendEmail($email, $name)
     {

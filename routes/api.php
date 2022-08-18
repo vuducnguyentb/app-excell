@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+Route::post('/upload-content-with-package',[PlayerController::class,'uploadContentWithPackage'])->name('upload.content.with.package');
 Route::post('/upload-content',[PlayerController::class,'uploadContent'])->name('import.content');
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
