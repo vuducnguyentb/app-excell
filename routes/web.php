@@ -16,3 +16,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('disneyplus', 'DisneyplusController@create')->name('disneyplus.create');
+Route::post('disneyplus', 'DisneyplusController@store')->name('disneyplus.store');
+Route::get('disneyplus/list', 'DisneyplusController@index')->name('disneyplus.index');
+Route::get('export', 'DisneyplusController@export')->name('disneyplus.export');
